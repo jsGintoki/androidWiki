@@ -9,9 +9,9 @@ Gradle是一种依赖管理工具，基于Groovy语言，面向Java应用为主�
 
 在Android Studio系列教程一--下载与安装中新建项目成功后会下载Gradle，貌似这个过程不翻墙也是可以下载，但是访问特别慢，建议翻墙下载。那么下载的Gradle到什么地方呢？
 
-Mac上会默认下载到 /Users/<用户名>/.gradle/wrapper/dists 目录\<br>
-Win平台会默认下载到 C:\Documents and Settings\<用户名>.gradle\wrapper\dists 目录\<br>
-你会看到这个目录下有个 gradle-x.xx-all 的文件夹,\<br> 如果下载实在太慢，但是又不想翻墙的话，可以自己手动到Gradle官网下载对应的版本，然后将下载的.zip文件(也可以解压)复制到上述的gradle-x.xx-all 文件夹下，不过还是建议让它直接下载的好。\<br>
+Mac上会默认下载到 /Users/<用户名>/.gradle/wrapper/dists 目录<br>
+Win平台会默认下载到 C:\Documents and Settings\<用户名>.gradle\wrapper\dists 目录<br>
+你会看到这个目录下有个 gradle-x.xx-all 的文件夹,<br> 如果下载实在太慢，但是又不想翻墙的话，可以自己手动到Gradle官网下载对应的版本，然后将下载的.zip文件(也可以解压)复制到上述的gradle-x.xx-all 文件夹下，不过还是建议让它直接下载的好<br>
 
 Gradle 基本概念
 
