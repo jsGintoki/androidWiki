@@ -1,190 +1,132 @@
-# gradle_study
-gradle 学习
+
+#gradle 学习
+
+什么是Gradle？
+
+Gradle是一种依赖管理工具，基于Groovy语言，面向Java应用为主，它抛弃了基于XML的各种繁琐配置，取而代之的是一种基于Groovy的内部领域特定（DSL）语言。
+
+安装Gradle
+
+在Android Studio系列教程一--下载与安装中新建项目成功后会下载Gradle，貌似这个过程不翻墙也是可以下载，但是访问特别慢，建议翻墙下载。那么下载的Gradle到什么地方呢？
+
+Mac上会默认下载到 /Users/<用户名>/.gradle/wrapper/dists 目录<br>
+Win平台会默认下载到 C:\Documents and Settings\<用户名>.gradle\wrapper\dists 目录<br>
+你会看到这个目录下有个 gradle-x.xx-all 的文件夹,<br> 如果下载实在太慢，但是又不想翻墙的话，可以自己手动到Gradle官网下载对应的版本，然后将下载的.zip文件(也可以解压)复制到上述的gradle-x.xx-all 文件夹下，不过还是建议让它直接下载的好<br>
 
 Gradle 基本概念
-首先我们学习几个gradle 的脚步语法，掌握了这几个语法，你就能非常简单的用gradle构建打包android项目了。 首先，我们来看下一个最简单android build.gradle。
-build.gradle
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-	
-buildscript {
-       
-	 repositories {
-            mavenCentral()
-        }
 
-        dependencies {
-            classpath 'com.android.tools.build:gradle:0.4'
+下面就以我的开源项目 9GAG 来详细讲解下和Gradle相关的知识, 和Gradle相关的几个文件一般有如下几个：
+
+
+
+红色标记部分从上到下咱们来一步步分析：
+
+1. 9GAG/app/build.gradle
+
+这个文件是app文件夹下这个Module的gradle配置文件，也可以算是整个项目最主要的gradle配置文件，我们来看下这个文件的内容：
+
+// 声明是Android程序\<br>
+apply plugin: 'com.android.application'
+
+android {
+    // 编译SDK的版本
+    compileSdkVersion 21
+    // build tools的版本
+    buildToolsVersion "21.1.1"
+
+    defaultConfig {
+        // 应用的包名
+        applicationId "me.storm.ninegag"
+        minSdkVersion 14
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    // java版本
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    buildTypes {
+        release {
+            // 是否进行混淆
+            minifyEnabled false
+            // 混淆文件的位置
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
-英语的介绍都来自与 gradle官方文档， 主要后边的中文不是翻译，是补充介绍。。
-buildscript{}
-Configures the build script classpath for this project. 说白了就是设置脚本的运行环境
-repositories{}
-Returns a handler to create repositories which are used for retrieving dependencies and uploading artifacts produced by the project. 大意就是支持java 依赖库管理（maven/ivy）,用于项目的依赖。这也是gradle 强力的地方。。。
-dependencies{}
-The dependency handler of this project. The returned dependency handler instance can be used for adding new dependencies. For accessing already declared dependencies, the configurations can be used. 依赖包的定义。支持maven/ivy，远程，本地库，也支持单文件，如果前面定义了repositories{}maven 库，使用maven的依赖（我没接触过ivy。。）的时候只需要按照用类似于com.android.tools.build:gradle:0.4，gradle 就会自动的往远程库下载相应的依赖。
 
-AS中APP所有的配置尽在一个build.gradle文件中，打包的时候也是解析build.gralde文件来打包的，所以搞懂build.gradle文件是至关重要的，结构如下所示
+    // 移除lint检查的error
+    lintOptions {
+      abortOnError false
+    }
+}
 
+dependencies {
+    // 编译libs目录下的所有jar包
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:support-v4:21.0.2'
+    compile 'com.etsy.android.grid:library:1.0.5'
+    compile 'com.alexvasilkov:foldable-layout:1.0.1'
+    // 编译extras目录下的ShimmerAndroid模块
+    compile project(':extras:ShimmerAndroid')
+}
+这里需要说明几点：
 
-apply plugin用来指定用的是哪个插件，取值有：
-		com.android.application：Android APP插件（打包得到的是.apk文件）
-		com.android.library：Android库插件（打包得到的是.aar文件）
+文件开头apply plugin是最新gradle版本的写法，以前的写法是apply plugin: 'android', 如果还是以前的写法，请改正过来。\<br>
+buildToolsVersion这个需要你本地安装该版本才行，很多人导入新的第三方库，失败的原因之一是build\<br> version的版本不对，这个可以手动更改成你本地已有的版本或者打开 SDK Manager 去下载对应版本。\<br>
+applicationId代表应用的包名，也是最新的写法，这里就不在多说了。\<br>
+android 5.0开始默认安装jdk1.7才能编译，但是由于mac系统自带jdk的版本是1.6，所以需要手动下载jdk1.7并配置下，具体可以见我这篇博客Mac下安装和管理Java\<br>
+minifyEnabled也是最新的语法，很早之前是runProguard,这个也需要更新下。\<br>
+proguardFiles这部分有两段，前一部分代表系统默认的android程序的混淆文件，该文件已经包含了基本的混淆声明，免去了我们很多事，这个\<br>文件的目录在 <sdk目录>/tools/proguard/proguard-android.txt , 后一部分是我们项目里的自定义的混淆文件，目录就在\<br> app/proguard-rules.txt , 如果你用Studio 1.0创建的新项目默认生成的文件名是 proguard-rules.pro ,\<br> 这个名字没关系，在这个文件里你可以声明一些第三方依赖的一些混淆规则，由于是开源项目，9GAG里并未进行混淆，具体混淆的语法也不是本篇博客讨论的范围。最终混淆的结果是这两部分文件共同作用的。\<br>
+compile project(':extras:ShimmerAndroid')这一行是因为9GAG中存在其他Module，不知道Module的概念可以看下这篇博客Android\<br> Studio系列教程二--基本设置与运行, 总之你可以理解成Android\<br> Library，由于Gradle的普及以及远程仓库的完善，这种依赖渐渐的会变得非常不常见，但是你需要知道有这种依赖的。\<br>
+以上文件里的内容只是基本配置，其实还有很多自定义部分，如自动打包debug，release，beta等环境，签名，多渠道打包等，后续会单独拿出来讲解。\<br>
+2. 9GAG/extras/ShimmerAndroid/build.gradle
 
-android用来指定Android打包插件的相关属性，其包含如下节点
-		compileSdkVersion(apiLevel)：设置编译时用的Android版本
-		buildToolsVersion(buildToolsVersionName)：设置编译时使用的构建工具的版本
-		defaultConfig：设置一些默认属性，其可用属性是buildTypes和ProductFlavors之和
-		sourceSets：配置相关源文件的位置，当你的项目的目录结构跟默认的有区别但又不想改的时候sourceSets就派上用场了
-		aidl     设置aidi的目录
-		assets     设置assets资源目录
-		compileConfigurationName     The name of the compile configuration for this source set.
-		java     Java源代码目录
-		jni     JNI代码目录
-		jniLibs     已编译好的JNI库目录
-		manifest     指定清单文件
-		name     The name of this source set.
-		packageConfigurationName     The name of the runtime configuration for this source set.
-		providedConfigurationName     The name of the compiled-only configuration for this source set.
-		renderscript     Renderscript源代码目录
-		res     资源目录
-		setRoot(path)     根目录
-		signingConfigs：配置签名信息
-		keyAlias     签名的别名
-		keyPassword     密码
-		storeFile     签名文件的路径
-		storePassword     签名密码
-		storeType     类型
-		buildTypes：配置构建类型，可打出不同类型的包，默认有debug和release两种，你还可以在增加N种
-		applicationIdSuffix     修改applicationId，在默认applicationId的基础上加后缀。在buildType中修改applicationId时只能加后缀，不能完全修改
-		debuggable     设置是否生成debug版的APK
-		jniDebuggable     设置生成的APK是否支持调试本地代码
-		minifyEnabled     设置是否执行混淆
-		multiDexEnabled     Whether Multi-Dex is enabled for this variant.
-		renderscriptDebuggable     设置生成的APK是否支持调试RenderScript代码
-		renderscriptOptimLevel     设置RenderScript优化级别
-		signingConfig     设置签名信息
-		versionNameSuffix     修改版本名称，在默认版本名称的基础上加后缀。在buildType中修改版本名称时只能加后缀，不能完全修改
-		zipAlignEnabled     设置是否对APK包执行ZIP对齐优化
-		proguardFile(proguardFile)     添加一个混淆文件
-		proguardFiles(proguardFileArray)     添加多个混淆文件
-		setProguardFiles(proguardFileIterable)     设置多个混淆文件
-		productFlavors：配置不同风格的APP，在buildTypes的基础上还可以让每一个类型的APP拥有不同的风格，所以最终打出的APK的数量就是buildTypes乘以productFlavors
-		applicationId     设置应用ID
-		multiDexEnabled     Whether Multi-Dex is enabled for this variant.signingConfig     Signing config used by this product flavor.
-		testApplicationId     设置测试时的应用ID
-		testFunctionalTest     See instrumentation.
-		testHandleProfiling     See instrumentation.
-		testInstrumentationRunner     Test instrumentation runner class name.
-		versionCode     设置版本号
-		versionName     设置版本名称
-		minSdkVersion(int minSdkVersion)     设置兼容的最小SDK版本
-		minSdkVersion(String minSdkVersion)     设置兼容的最小版本
-		proguardFile(proguardFile)     添加一个混淆文件
-		proguardFiles(proguardFileArray)     添加多个混淆文件
-		setProguardFiles(proguardFileIterable)     设置多个混淆文件
-		targetSdkVersion(int targetSdkVersion)     设置目标SDK版本
-		targetSdkVersion(String targetSdkVersion)     设置目标SDK版本
-		testOptions：设置测试相关属性
-		reportDir     设置测试报告的目录
-		resultsDir     设置测试结果的目录
-		aaptOptions：设置AAPT的属性
-		failOnMissingConfigEntry     Forces aapt to return an error if it fails to find an entry for a configuration.
-		ignoreAssets     Pattern describing assets to be ignore.
-		noCompress     Extensions of files that will not be stored compressed in the APK.
-		useNewCruncher     Whether to use the new cruncher.
-		lintOptions：设置Lint的属性
-		abortOnError     设置是否在lint发生错误时终止构建
-		absolutePaths     Whether lint should display full paths in the error output. By default the paths are relative to the path lint was invoked from.
-		check     The exact set of issues to check, or null to run the issues that are enabled by default plus any issues enabled via LintOptions.getEnable() and without issues disabled via LintOptions.getDisable(). If non-null, callers are allowed to modify this collection.
-		checkAllWarnings     Returns whether lint should check all warnings, including those off by default.
-		checkReleaseBuilds     Returns whether lint should check for fatal errors during release builds. Default is true. If issues with severity "fatal" are found, the release build is aborted.
-		disable     The set of issue id's to suppress. Callers are allowed to modify this collection.
-		enable     The set of issue id's to enable. Callers are allowed to modify this collection. To enable a given issue, add the issue ID to the returned set.
-		explainIssues     Returns whether lint should include explanations for issue errors. (Note that HTML and XML reports intentionally do this unconditionally, ignoring this setting.)
-		htmlOutput     The optional path to where an HTML report should be written.
-		htmlReport     Whether we should write an HTML report. Default true. The location can be controlled by LintOptions.getHtmlOutput().
-		ignoreWarnings     Returns whether lint will only check for errors (ignoring warnings).
-		lintConfig     The default configuration file to use as a fallback.
-		noLines     Whether lint should include the source lines in the output where errors occurred (true by default).
-		quiet     Returns whether lint should be quiet (for example, not write informational messages such as paths to report files written).
-		severityOverrides     An optional map of severity overrides. The map maps from issue id's to the corresponding severity to use, which must be "fatal", "error", "warning", or "ignore".
-		showAll     Returns whether lint should include all output (e.g. include all alternate locations, not truncating long messages, etc.)
-		textOutput     The optional path to where a text report should be written. The special value "stdout" can be used to point to standard output.
-		textReport     Whether we should write an text report. Default false. The location can be controlled by LintOptions.getTextOutput().
-		warningsAsErrors     Returns whether lint should treat all warnings as errors.
-		xmlOutput     The optional path to where an XML report should be written.
-		xmlReport     Whether we should write an XML report. Default true. The location can be controlled by LintOptions.getXmlOutput().
-		check(id)     Adds the id to the set of issues to check.
-		check(ids)     Adds the ids to the set of issues to check.
-		disable(id)     Adds the id to the set of issues to enable.
-		disable(ids)     Adds the ids to the set of issues to enable.
-		enable(id)     Adds the id to the set of issues to enable.
-		enable(ids)     Adds the ids to the set of issues to enable.
-		error(id)     Adds a severity override for the given issues.
-		error(ids)     Adds a severity override for the given issues.
-		fatal(id)     Adds a severity override for the given issues.
-		fatal(ids)     Adds a severity override for the given issues.
-		ignore(id)     Adds a severity override for the given issues.
-		ignore(ids)     Adds a severity override for the given issues.
-		warning(id)     Adds a severity override for the given issues.
-		warning(ids)     Adds a severity override for the given issues.
-		dexOptions
-		incremental     Whether to enable the incremental mode for dx. This has many limitations and may not work. Use carefully.
-		javaMaxHeapSize     Sets the -JXmx* value when calling dx. Format should follow the 1024M pattern.
-		jumboMode     Enable jumbo mode in dx (--force-jumbo).
-		preDexLibraries     Whether to pre-dex libraries. This can improve incremental builds, but clean builds may be slower.
-		compileOptions：设置编译的相关属性
-		sourceCompatibility     Language level of the source code.
-		targetCompatibility     Version of the generated Java bytecode.
-		packagingOptions：设置APK包的相关属性
-		excludes     The list of excluded paths.
-		pickFirsts     The list of paths where the first occurrence is packaged in the APK.
-		exclude(path)     Adds an excluded paths.
-		pickFirst(path)     Adds a firstPick path. First pick paths do get packaged in the APK, but only the first occurrence gets packaged.
-		jacoco：设置JaCoCo的相关属性
-		version     设置JaCoCo的版本
-		splits：设置如何拆分APK（比如你想拆分成arm版和x86版）
-		abi     ABI settings.
-		abiFilters     The list of ABI filters used for multi-apk.
-		density     Density settings.
-		densityFilters     The list of Density filters used for multi-apk.
+每一个Module都需要有一个gradle配置文件，语法都是一样，唯一不同的是开头声明的是 apply plugin: 'com.android.library'
 
-dependencies：配置依赖
+3. 9GAG/gradle
 
-参考文档：
-		最权威的官方打包指南（需要翻墙）http://tools.android.com/tech-docs/new-build-system
-		Android打包插件API（在线版）http://apdr.qiniudn.com/index.html 
+这个目录下有个 wrapper 文件夹，里面可以看到有两个文件，我们主要看下 gradle-wrapper.properties 这个文件的内容：
 
-如果你对于手动配置build.gradle文件还不太熟练，那么可以使用AS提供的图形界面来配置，按下CMD+;即可打开配置页面
+#Thu Dec 18 16:02:24 CST 2014
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-2.2.1-all.zip
+可以看到里面声明了gradle的目录与下载路径以及当前项目使用的gradle版本，这些默认的路径我们一般不会更改的，这个文件里指明的gradle版本不对也是很多导包不成功的原因之一。\<br>
 
+4. 9GAG/build.gradle
 
-新特性：
-     Google在用Gradle最为Android打包工具的时候引入了applicationId的概念，这是为了打多个不同ID的APK包准备的。
-applicationId可以和清单文件中的packageName不一样，我们在代码中通过getPackageName()方法拿到的是applicationId，而清单文件中配置的packageName则仅作为R.java和BuildConfig.java的存放目录。
-这样一来通过Class.forName(getPackageName()+”.R”)来获取R类的方式就行不通了，一定要注意。
+这个文件是整个项目的gradle基础配置文件,我们来看看这里面的内容
+\<br>
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-打包
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.0.0'
+    }
+}
 
-build.gradle文件配置完成后，打开终端，进入项目目录下，执行gradle build即可打包，打包结束后在相应module的build/outputs/apk/目录下可以看到.apk文件
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
+内容主要包含了两个方面：一个是声明仓库的源，这里可以看到是指明的jcenter(), 之前版本则是mavenCentral(),\<br> jcenter可以理解成是一个新的中央远程仓库，兼容maven中心仓库，而且性能更优。另一个是声明了android gradle plugin的版本，android\<br> studio 1.0正式版必须要求支持gradle plugin 1.0的版本。\<br>
 
-如果你是在项目目录下执行的打包命令，那么会对项目中所有的module都打包，进入某个module目录下执行打包命令就只对当前module打包，每个module打包生成的APK都才存放在mudule的build/outputs/apk目录下
+5. 9GAG/settings.gradle
+
+这个文件是全局的项目配置文件，里面主要声明一些需要加入gradle的module，我们来看看9GAG该文件的内容：
+
+include ':app', ':extras:ShimmerAndroid'\<br>
+文件中的 app, extras:ShimmerAndroid 都是module，如果还有其他module都需要按照如上格式加进去。
 
 
 
